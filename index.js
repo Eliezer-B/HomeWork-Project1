@@ -39,32 +39,48 @@ const questions = async () => {
     email = await rl.question("What is your E-mail? ");
   }
 
-  const userData = { firstName, lastName, dob, ID, email };
+  const userData = `${firstName},${lastName},${dob},${ID},${email}`;
 
-  await appendFile("./data.txt", `${JSON.stringify(userData)}\n`);
-  console.log('user was added successfully');
+  const usersDataFile = await readFile("./data.txt", { encoding: "utf8" });
+  const dataArr = usersDataFile.split("\n");
+
+  const userIndex = `${ID}:${dataArr.length}`;
+
+  await appendFile("./data.txt", `${userData}\n`);
+  await appendFile("./user_index.txt", `${userIndex}\n`);
+  console.log(`user was added successfully`);
   addOrSearchUser();
   // rl.close();
 };
 
 const searchUser = async () => {
   const idForSearch = await rl.question("Please Enter ID to search? ");
-  const file = await open("./data.txt");
-  for await (const line of file.readLines()) {
-    if (line.includes(idForSearch)) {
-      console.log(`we found your user \n ${line} `);
-    }
+
+  const userIndexFile = await readFile("./user_index.txt", {
+    encoding: "utf8",
+  });
+
+  const dataArr = userIndexFile.split("\n");
+  const obj = dataArr.reduce((p, c) => {
+    const [k, v] = c.split(":");
+    p[k] = v;
+    return p;
+  }, {});
+  if (obj[idForSearch]) {
+    
+    console.log(`User in row ${obj[idForSearch]}`);
+  } else {
+    console.log("user not found");
   }
-  const contents = await readFile("./data.txt", { encoding: "utf8" });
-  if (!contents.includes(idForSearch)) {
-    console.log("we couldn't find a user with this such ID please try again");
-  }
-  addOrSearchUser()
+
+ 
+
+  addOrSearchUser();
 };
 
 const addOrSearchUser = async () => {
   const addOrSearch = await rl.question(
-    "please choose (A)Add or (S)Search a user "
+    "please choose (A)Add or (S)Search a user: "
   );
   if (addOrSearch === "A") {
     questions();
@@ -80,4 +96,3 @@ addOrSearchUser();
 //   console.log("\nBYE BYE !!!");
 //   process.exit(0);
 // });
-
