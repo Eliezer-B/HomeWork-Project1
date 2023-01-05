@@ -39,14 +39,23 @@ const questions = async () => {
     email = await rl.question("What is your E-mail? ");
   }
 
-  const userData = `${firstName},${lastName},${dob},${ID},${email}`;
+  const USER_BUF_LEN = 77;
+  const FILL_CHAR = `|`;
+  const bfr = Buffer.alloc(USER_BUF_LEN, FILL_CHAR);
+
+  bfr.write(firstName, 0);
+  bfr.write(lastName, 15);
+  bfr.write(dob, 35);
+  bfr.write(email, 46);
+  bfr.write(ID, 66);
 
   const usersDataFile = await readFile("./data.txt", { encoding: "utf8" });
   const dataArr = usersDataFile.split("\n");
 
-  const userIndex = `${ID}:${dataArr.length}`;
+  const userIndex = `${ID}:${(dataArr.length - 1) * 78}`;
 
-  await appendFile("./data.txt", `${userData}\n`);
+  await appendFile("./data.txt", `${bfr}\n`);
+
   await appendFile("./user_index.txt", `${userIndex}\n`);
   console.log(`user was added successfully`);
   addOrSearchUser();
@@ -60,20 +69,26 @@ const searchUser = async () => {
     encoding: "utf8",
   });
 
+  const usersData = await readFile("./data.txt", "utf-8");
+
+  const usersDataBfr = Buffer.from(usersData, "utf-8");
+
   const dataArr = userIndexFile.split("\n");
   const obj = dataArr.reduce((p, c) => {
     const [k, v] = c.split(":");
     p[k] = v;
     return p;
   }, {});
+
   if (obj[idForSearch]) {
-    
-    console.log(`User in row ${obj[idForSearch]}`);
+    console.log(`your user was found`);
+
+    console.log(
+      usersDataBfr.slice(obj[idForSearch], obj[idForSearch] + 78).toString()
+    );
   } else {
     console.log("user not found");
   }
-
- 
 
   addOrSearchUser();
 };
